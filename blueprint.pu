@@ -1,0 +1,23 @@
+@startuml blueprint
+
+package Server {
+    queue WaitQueue
+    cloud UnixSocket
+    control App
+}
+
+component "Posix API" as posix
+
+collections SharedMemory
+
+node Client
+
+Client --> UnixSocket: 1. register to queue
+UnixSocket --> WaitQueue: 2. add to queue
+WaitQueue --> App: 3. dequeue
+App --> posix: 4. notify usr1 signal
+posix --> Client: 5. send usr1 signal
+Client --> SharedMemory: 6. write data
+SharedMemory --> App: 7. read data
+
+@enduml
