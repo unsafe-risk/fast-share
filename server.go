@@ -102,8 +102,6 @@ func (fs *FastShareServer) Length() int {
 }
 
 func (fs *FastShareServer) Close() error {
-	_ = fs.listener.Close()
-
 	if err := unix.SysvShmDetach(fs.buffer); err != nil {
 		return fmt.Errorf("fast-share.Close: unix.SysvShmDetach: %w", err)
 	}
