@@ -71,8 +71,32 @@ func (fc *FastShareClient) Receive(w io.Writer) (uint32, uint32, error) {
 
 	name := header.Name()
 	length := header.Length()
+	offset := uint32(0)
 
-	// TODO: implement
+	buf := [8]byte{}
+
+	for offset < length {
+		if _, err := fc.conn.Read(buf[:]); err != nil {
+			return 0, 0, fmt.Errorf("fast-share.Receive: net.Conn.Read: %w", err)
+		}
+
+		size := binary.BigEndian.Uint64(buf[:])
+		if uint64(offset)+size > uint64(length) {
+			return 0, 0, fmt.Errorf("fast-share.Receive: size(%d) > fc.length(%d)", size, fc.length)
+		}
+
+		if _, err := w.Write(fc.buffer[:size]); err != nil {
+			return 0, 0, fmt.Errorf("fast-share.Receive: io.Writer.Write: %w", err)
+		}
+
+		if _, err := fc.conn.Write(buf[:]); err != nil {
+			return 0, 0, fmt.Errorf("fast-share.Receive: net.Conn.Write: %w", err)
+		}
+
+		offset += uint32(size)
+	}
+
+	return name, length, nil
 }
 
 func (fc *FastShareClient) Close() error {
