@@ -112,6 +112,8 @@ func (fs *FastShareServer) Send(name uint32, data []byte) error {
 
 	h := NewHeader(name, uint32(len(data)))
 	if err := WriteHeaderTo(fs.client, h); err != nil {
+		DisposeHeader(h)
+		fs.Disconnect()
 		return fmt.Errorf("fast-share.Send: WriteHeaderTo: %w", err)
 	}
 	defer DisposeHeader(h)
