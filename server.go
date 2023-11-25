@@ -69,7 +69,7 @@ func (fs *FastShareServer) Listen(port int) error {
 			}
 
 			buf := [8]byte{}
-			binary.BigEndian.PutUint64(buf[:], uint64(unix.Getpid()))
+			binary.BigEndian.PutUint64(buf[:], uint64(fs.id))
 			_, err := conn.Write(buf[:])
 			if err != nil {
 				return
@@ -106,7 +106,7 @@ func (fs *FastShareServer) PID() int {
 }
 
 func (fs *FastShareServer) Send(name uint32, data []byte) error {
-	if !fs.connected.Load() {
+	if !fs.connected.Load() || fs.client == nil {
 		return fmt.Errorf("fast-share.Send: not connected")
 	}
 
@@ -125,7 +125,7 @@ func (fs *FastShareServer) Send(name uint32, data []byte) error {
 			last = len(data)
 		}
 
-		fs.buffer = data[offset:last]
+		copy(fs.buffer, data[offset:last])
 
 		binary.BigEndian.PutUint64(currentBufSize[:], uint64(last-offset))
 
