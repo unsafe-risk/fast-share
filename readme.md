@@ -8,4 +8,4 @@ Fast Share is an IPC library with POSIX API.
 
 ## example
 
-for more information, see [example](./example/readme.md)
+for more information, see the [example](./example/readme.md).
