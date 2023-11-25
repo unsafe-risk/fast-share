@@ -1,23 +1,27 @@
 @startuml blueprint
 
-package Server {
-    queue WaitQueue
-    cloud UnixSocket
-    control App
-}
+actor User
+boundary Server
+control Service
 
-component "Posix API" as posix
+Server -> Server: create shared memory
+Server -> Server: open loopback tcp
 
-collections SharedMemory
+Service -> Server: connect to loopback tcp
+Server -> Service: accept connection
+Server -> Service: send shared memory id
+Service -> Service: open shared memory
 
-node Client
+loop job
+    User -> Server: request
+    Server -> Service: send header
 
-Client --> UnixSocket: 1. register to queue
-UnixSocket --> WaitQueue: 2. add to queue
-WaitQueue --> App: 3. dequeue
-App --> posix: 4. notify usr1 signal
-posix --> Client: 5. send usr1 signal
-Client --> SharedMemory: 6. write data
-SharedMemory --> App: 7. read data
+    loop send and receive
+        Server -> Server: copy to shared memory
+        Service -> Service: send current size
+        Service -> Service: copy from shared memory
+        Service -> Server: send read size
+    end
+end
 
 @enduml
