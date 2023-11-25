@@ -4,7 +4,11 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
 	"sync/atomic"
+	"syscall"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -75,6 +79,12 @@ func (fs *FastShareServer) Listen(port int) error {
 				return
 			}
 
+			binary.BigEndian.PutUint64(buf[:], uint64(fs.pid))
+			_, err = conn.Write(buf[:])
+			if err != nil {
+				return
+			}
+
 			fs.client = conn
 		}()
 	}
@@ -121,6 +131,9 @@ func (fs *FastShareServer) Send(name uint32, data []byte) error {
 	offset := 0
 	currentBufSize := [4]byte{}
 
+	ack := make(chan os.Signal, 1)
+	signal.Notify(ack, syscall.SIGUSR1)
+
 	for offset < len(data) {
 		last := offset + fs.length
 		if last > len(data) {
@@ -135,8 +148,10 @@ func (fs *FastShareServer) Send(name uint32, data []byte) error {
 			return fmt.Errorf("fast-share.Send: net.Conn.Write: %w", err)
 		}
 
-		if _, err := fs.client.Read(currentBufSize[:]); err != nil {
-			return fmt.Errorf("fast-share.Send: net.Conn.Read: %w", err)
+		select {
+		case <-ack:
+		case <-time.After(1 * time.Second):
+			return fmt.Errorf("fast-share.Send: timeout")
 		}
 
 		offset = last

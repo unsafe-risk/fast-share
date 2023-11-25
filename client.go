@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"syscall"
 
 	"golang.org/x/sys/unix"
 )
@@ -14,6 +15,8 @@ type FastShareClient struct {
 	length int
 	host   string
 	buffer []byte
+
+	serverPid int
 
 	conn net.Conn
 }
@@ -39,6 +42,14 @@ func (fc *FastShareClient) Connect() error {
 
 	id := binary.BigEndian.Uint64(buf[:])
 	fc.shmId = int(id)
+
+	_, err = fc.conn.Read(buf[:])
+	if err != nil {
+		return fmt.Errorf("fast-share.Connect: net.Conn.Read: %w", err)
+	}
+
+	serverPid := binary.BigEndian.Uint64(buf[:])
+	fc.serverPid = int(serverPid)
 
 	return nil
 }
@@ -89,8 +100,8 @@ func (fc *FastShareClient) Receive(w io.Writer) (uint32, uint32, error) {
 			return 0, 0, fmt.Errorf("fast-share.Receive: io.Writer.Write: %w", err)
 		}
 
-		if _, err := fc.conn.Write(buf[:]); err != nil {
-			return 0, 0, fmt.Errorf("fast-share.Receive: net.Conn.Write: %w", err)
+		if err := syscall.Kill(fc.serverPid, syscall.SIGUSR1); err != nil {
+			return 0, 0, fmt.Errorf("fast-share.Receive: syscall.Kill: %w", err)
 		}
 
 		offset += uint32(size)
