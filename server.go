@@ -117,7 +117,7 @@ func (fs *FastShareServer) Send(name uint32, data []byte) error {
 	defer DisposeHeader(h)
 
 	offset := 0
-	currentBufSize := [8]byte{}
+	currentBufSize := [4]byte{}
 
 	for offset < len(data) {
 		last := offset + fs.length
@@ -127,7 +127,7 @@ func (fs *FastShareServer) Send(name uint32, data []byte) error {
 
 		copy(fs.buffer, data[offset:last])
 
-		binary.BigEndian.PutUint64(currentBufSize[:], uint64(last-offset))
+		binary.BigEndian.PutUint32(currentBufSize[:], uint32(last-offset))
 
 		if _, err := fs.client.Write(currentBufSize[:]); err != nil {
 			return fmt.Errorf("fast-share.Send: net.Conn.Write: %w", err)
