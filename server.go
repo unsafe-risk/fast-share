@@ -136,6 +136,7 @@ func (fs *FastShareServer) Send(name uint32, data []byte) error {
 
 	ack := make(chan os.Signal, 1)
 	signal.Notify(ack, syscall.SIGUSR1)
+	defer signal.Stop(ack)
 
 	for offset < len(data) {
 		last := offset + fs.length
