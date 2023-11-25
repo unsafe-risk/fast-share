@@ -51,7 +51,7 @@ func NewServer(key int, bitSize int) (*FastShareServer, error) {
 }
 
 func (fs *FastShareServer) Listen(port int) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
 	if err != nil {
 		return fmt.Errorf("fast-share.Listen: net.Listen: %w", err)
 	}

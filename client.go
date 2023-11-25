@@ -12,20 +12,20 @@ import (
 type FastShareClient struct {
 	shmId  int
 	length int
-	port   int
+	host   string
 	buffer []byte
 
 	conn net.Conn
 }
 
-func NewClient(port int) *FastShareClient {
+func NewClient(host string) *FastShareClient {
 	return &FastShareClient{
-		port: port,
+		host: host,
 	}
 }
 
 func (fc *FastShareClient) Connect() error {
-	conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", fc.port))
+	conn, err := net.Dial("tcp", fc.host)
 	if err != nil {
 		return fmt.Errorf("fast-share.Connect: net.Dial: %w", err)
 	}
