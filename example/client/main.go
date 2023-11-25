@@ -8,9 +8,7 @@ import (
 )
 
 func main() {
-	const port = 3857
-
-	client := fastshare.NewClient(port)
+	client := fastshare.NewClient("localhost:3857")
 
 	if err := client.Connect(); err != nil {
 		panic(err)
