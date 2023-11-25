@@ -20,6 +20,7 @@ type FastShareServer struct {
 
 	pid int
 
+	listener  net.Listener
 	client    net.Conn
 	connected atomic.Bool
 }
@@ -60,6 +61,8 @@ func (fs *FastShareServer) Listen(port int) error {
 		return fmt.Errorf("fast-share.Listen: net.Listen: %w", err)
 	}
 
+	fs.listener = lis
+
 	for {
 		conn, err := lis.Accept()
 		if err != nil {
@@ -99,6 +102,8 @@ func (fs *FastShareServer) Length() int {
 }
 
 func (fs *FastShareServer) Close() error {
+	_ = fs.listener.Close()
+
 	if err := unix.SysvShmDetach(fs.buffer); err != nil {
 		return fmt.Errorf("fast-share.Close: unix.SysvShmDetach: %w", err)
 	}
